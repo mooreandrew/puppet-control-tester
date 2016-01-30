@@ -2,13 +2,29 @@ from sqlalchemy import Column, Integer, String, DateTime
 from application import db
 from sqlalchemy.orm import relationship
 
+class tests(db.Model):
+    __tablename__ = 'tests'
+
+    id = Column(Integer, primary_key=True)
+    test_pushedat = Column(DateTime)
+
+    def __init__(self, test_pushedat):
+        self.test_pushedat = test_pushedat
+
 class testroles(db.Model):
     __tablename__ = 'testroles'
 
     id = Column(Integer, primary_key=True)
-    testrole_name = Column(String(100), nullable=False)
+    test_id = Column(Integer)
+    testrole_name = Column(String(100))
+    testrole_status = Column(Integer)
+    testrole_start_time = Column(DateTime)
+    testrole_end_time = Column(DateTime)
+    testrole_log = Column(String)
+    slave_id = Column(Integer, default=0)
 
-    def __init__(self, testrole_name):
+    def __init__(self, test_id, testrole_name):
+        self.test_id = test_id
         self.testrole_name = testrole_name
 
 class slaves(db.Model):
@@ -18,7 +34,7 @@ class slaves(db.Model):
     slave_hostname = Column(String(100), nullable=False)
     slave_version = Column(String(100), nullable=False)
     slave_system = Column(String(100), nullable=False)
-    slave_cores = Column(String(100), nullable=False)
+    slave_cores = Column(Integer, nullable=False)
     slave_distribution = Column(String(100), nullable=False)
     slave_ip = Column(String(100), nullable=False)
     slave_last_connect = Column(DateTime)

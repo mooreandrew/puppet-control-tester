@@ -9,6 +9,9 @@ if app.config['MODE'] == 'master':
 
     @app.route('/')
     def index_master():
+
+        print(get_latest_commit())
+
         slave_res = slaves.query.filter().order_by(slaves.slave_hostname).all()
         return render_template('index.html', slave_res=slave_res)
 
@@ -20,7 +23,6 @@ if app.config['MODE'] == 'master':
     def master_slave_update():
         request_json = request.get_json(force=True)
 
-
         ## Insert/Update Slave Details
         slave_row = slaves.query.filter(slaves.slave_hostname == request_json['system_info']['hostname'], slaves.slave_ip == request_json['system_info']['ip']).order_by().first()
         if slave_row:
@@ -30,7 +32,62 @@ if app.config['MODE'] == 'master':
             db.session.add(slave_row)
         db.session.commit()
 
-        return Response(json.dumps({'status': 1}),  mimetype='application/json')
+        available_processes = int(request_json['system_info']['cores'])
+
+        data = {}
+        data['status'] = 1
+
+        test_row = tests.query.filter().order_by(tests.id.desc()).first()
+        if test_row:
+            data['test_id'] = test_row.id
+        else:
+            data['test_id'] = 0
+
+
+        data['test_roles'] = []
+        testroles_res = testroles.query.filter(testroles.test_id == data['test_id'], testroles.slave_id == 0).order_by(testroles.id).limit(available_processes).all()
+        for testroles_row in testroles_res:
+            data['test_roles'].append({'id': testroles_row.id, 'name': testroles_row.testrole_name} )
+            # Assign slave_id to this node
+
+
+        return Response(json.dumps(data),  mimetype='application/json')
+
+
+
+    def get_latest_commit():
+
+        response = requests.get('https://api.github.com/repos/landregistry-ops/puppet-control')
+        response_json = response.json()
+        print(response_json)
+        if 'pushed_at' in response_json:
+            pushed_date = datetime.datetime.strptime(response_json['pushed_at'], "%Y-%m-%dT%H:%M:%SZ")
+
+            test_row = tests.query.filter(tests.test_pushedat == pushed_date).order_by().first()
+            if not test_row:
+                test_row = tests(pushed_date)
+                db.session.add(test_row)
+                db.session.commit()
+                test_id = test_row.id
+
+                response = requests.get('https://api.github.com/repositories/29131296/contents/hiera/roles')
+                response_json2 = response.json()
+
+                for files in response_json2:
+                    testrole_row = testroles(test_id, files['name'])
+                    db.session.add(testrole_row)
+                    db.session.commit()
+
+
+                return test_id
+
+            return 0
+
+            print(res)
+        else:
+            return 0
+
+#
 
 elif app.config['MODE'] == 'slave':
 
