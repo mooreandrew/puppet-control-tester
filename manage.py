@@ -6,7 +6,7 @@ import os
 #However, without it, the model is not migrated.
 from application.models import *
 
-from application.server import app, db
+from application import app
 app.config.from_object(os.environ.get('SETTINGS'))
 app.config['polling'] = False
 
@@ -14,6 +14,7 @@ migrate = Migrate(app, db)
 manager = Manager(app)
 
 manager.add_command('db', MigrateCommand)
+
 
 if __name__ == '__main__':
     manager.run()

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block content %}
+
+
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">Slave Status</h3>
+  </div>
+   <table class="table table-striped">
+     <tr>
+       <th>Hostname</th>
+       <th>IP</th>
+       <th>System</th>
+       <th>Distribution</th>
+       <th>Version</th>
+       <th>Cores</th>
+       <th>Last Call</th>
+     </tr>
+     {% for slave_row in slave_res %}
+     {% if is_datetime_recently(slave_row['slave_last_connect']) == 1 %}
+     	{% set status = 'success' %}
+     {% else %}
+     	{% set status = 'danger' %}
+     {% endif %}
+
+     <tr class="{{ status }}">
+       <td>{{ slave_row['slave_hostname'] }}</td>
+       <td>{{ slave_row['slave_ip'] }}</td>
+       <td>{{ slave_row['slave_system'] }}</td>
+       <td>{{ slave_row['slave_distribution'] }}</td>
+       <td>{{ slave_row['slave_version'] }}</td>
+       <td>{{ slave_row['slave_cores'] }}</td>
+       <td>{{ slave_row['slave_last_connect'].strftime('%Y-%m-%d %H:%S') }}</td>
+
+
+
+     </tr>
+     {% endfor %}
+   </table>
+</div>
+
+
+{% endblock %}

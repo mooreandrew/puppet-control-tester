@@ -3,27 +3,25 @@ import threading
 import atexit
 from application import *
 from application.server import *
-import multiprocessing
+from application.slave import *
+import datetime
+import requests
+import json
 
-log = 'bb'
 
-
-def get_log():
-    return log
-
-def set_log(logt):
-    global log
-    log = log + logt
-
-def get_cores():
-    cores = multiprocessing.cpu_count()
-    return cores
-
+tries = 0
 
 
 def thread_function():
     log = get_log()
+    print(log)
 
+    payload = {"status":1,"datetime": str(datetime.datetime.now()), "system_info": get_system_info()}
+
+    response = requests.post(app.config['MASTER_HOST'] + '/master/slave_update', data=json.dumps(payload))
+    response_json = response.json()
+
+    print(response_json)
     # Send message to the master.
     # - I'm alive
     # - Current test id (if this doesn't match server, then to stop all tests)
@@ -32,7 +30,6 @@ def thread_function():
     # - The active tests
     # - Any logs
 
-    print(log)
 
 
 POOL_TIME = 5 #Seconds
@@ -52,10 +49,13 @@ def doStuff():
     global commonDataStruct
     global yourThread
     global log
+    global tries
 
-    # Do your stuff with commonDataStruct Here
-    thread_function()
-
+    if tries == 1:
+        # Do your stuff with commonDataStruct Here
+        thread_function()
+    else:
+        tries = 1
     # Set the next thread to happen
     yourThread = threading.Timer(POOL_TIME, doStuff, ())
     yourThread.start()

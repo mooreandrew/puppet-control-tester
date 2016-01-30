@@ -15,12 +15,20 @@ class slaves(db.Model):
     __tablename__ = 'slaves'
 
     id = Column(Integer, primary_key=True)
-    slave_name = Column(String(100), nullable=False)
+    slave_hostname = Column(String(100), nullable=False)
+    slave_version = Column(String(100), nullable=False)
+    slave_system = Column(String(100), nullable=False)
+    slave_cores = Column(String(100), nullable=False)
+    slave_distribution = Column(String(100), nullable=False)
     slave_ip = Column(String(100), nullable=False)
     slave_last_connect = Column(DateTime)
 
-    def __init__(self, slave_name, slave_ip, slave_last_connect):
-        self.slave_name = slave_name
+    def __init__(self, slave_hostname, slave_version, slave_system, slave_cores, slave_distribution, slave_ip, slave_last_connect):
+        self.slave_hostname = slave_hostname
+        self.slave_version = slave_version
+        self.slave_system = slave_system
+        self.slave_cores = slave_cores
+        self.slave_distribution = slave_distribution
         self.slave_ip = slave_ip
         self.slave_last_connect = slave_last_connect
 
