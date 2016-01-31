@@ -62,3 +62,5 @@ target/
 *.idea
 
 app.db
+myenv
+puppet-test-env

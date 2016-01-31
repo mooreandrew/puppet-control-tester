@@ -1,11 +1,15 @@
 from application import *
 from flask import Flask, render_template, request, abort, redirect, url_for, flash, Response, jsonify, get_flashed_messages, session
-from application.poll import *
+from application.slave_poll import *
 from application.slave import *
 from application.models import *
 import datetime
 
 if app.config['MODE'] == 'master':
+
+    testroles_row = testroles.query.filter(testroles.testrole_order == 1).order_by(testroles.id).first()
+    testroles_row.slave_id = 0
+    db.session.commit()
 
     @app.route('/')
     def index_master():
@@ -22,6 +26,8 @@ if app.config['MODE'] == 'master':
     @app.route('/master/slave_update', methods=['POST'])
     def master_slave_update():
         request_json = request.get_json(force=True)
+
+        print(request_json)
 
         ## Insert/Update Slave Details
         slave_row = slaves.query.filter(slaves.slave_hostname == request_json['system_info']['hostname'], slaves.slave_ip == request_json['system_info']['ip']).order_by().first()
@@ -44,26 +50,24 @@ if app.config['MODE'] == 'master':
         else:
             data['test_id'] = 0
 
-
-
         data['test_roles'] = []
-
-
-
-
 
         # Only do the next step if every alive slave has updated its test id
 
-        testrolesorder_row = testroles.query.filter(testroles.test_id == data['test_id'], testroles.testrole_status != 2).order_by(testroles.testrole_order).first()
+        alive_time = datetime.datetime.now() - datetime.timedelta(seconds=240)
+        alive_slaves = slaves.query.filter(slaves.slave_last_connect > alive_time, slaves.test_id != data['test_id']).order_by().all()
 
-        if testrolesorder_row:
-            testrole_order = testrolesorder_row.testrole_order
+        if len(alive_slaves) == 0:
+            testrolesorder_row = testroles.query.filter(testroles.test_id == data['test_id'], testroles.testrole_status != 2).order_by(testroles.testrole_order).first()
+            if testrolesorder_row:
+                testrole_order = testrolesorder_row.testrole_order
+                testroles_res = testroles.query.filter(testroles.test_id == data['test_id'], testroles.slave_id == 0, testroles.testrole_order == testrole_order).order_by(testroles.id).limit(available_processes).all()
+                for testroles_row in testroles_res:
+                    data['test_roles'].append({'id': testroles_row.id, 'name': testroles_row.testrole_name, 'type': testroles_row.testrole_type } )
+                    testroles_row.slave_id = slave_row.id
+                    db.session.commit()
 
-            testroles_res = testroles.query.filter(testroles.test_id == data['test_id'], testroles.slave_id == 0, testroles.testrole_order == testrole_order).order_by(testroles.id).limit(available_processes).all()
-            for testroles_row in testroles_res:
-                data['test_roles'].append({'id': testroles_row.id, 'name': testroles_row.testrole_name, 'type': testroles_row.testrole_type } )
-                # Assign slave_id to this node
-
+                    # TODO: Assign slave_id to this node
 
         return Response(json.dumps(data),  mimetype='application/json')
 

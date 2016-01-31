@@ -15,6 +15,7 @@
        <th>Distribution</th>
        <th>Version</th>
        <th>Cores</th>
+       <th>Test ID</th>
        <th>Last Call</th>
      </tr>
      {% for slave_row in slave_res %}
@@ -31,6 +32,7 @@
        <td>{{ slave_row['slave_distribution'] }}</td>
        <td>{{ slave_row['slave_version'] }}</td>
        <td>{{ slave_row['slave_cores'] }}</td>
+       <td>{{ slave_row['test_id'] }}</td>
        <td>{{ slave_row['slave_last_connect'].strftime('%Y-%m-%d %H:%M') }}</td>
 
 
