@@ -17,15 +17,19 @@ class testroles(db.Model):
     id = Column(Integer, primary_key=True)
     test_id = Column(Integer)
     testrole_name = Column(String(100))
-    testrole_status = Column(Integer)
+    testrole_status = Column(Integer, default=0)
     testrole_start_time = Column(DateTime)
     testrole_end_time = Column(DateTime)
     testrole_log = Column(String)
+    testrole_order = Column(Integer, default=0)
+    testrole_type = Column(Integer, default=0)
     slave_id = Column(Integer, default=0)
 
-    def __init__(self, test_id, testrole_name):
+    def __init__(self, test_id, testrole_name, testrole_order, testrole_type):
         self.test_id = test_id
         self.testrole_name = testrole_name
+        self.testrole_order = testrole_order
+        self.testrole_type = testrole_type
 
 class slaves(db.Model):
     __tablename__ = 'slaves'
@@ -38,6 +42,7 @@ class slaves(db.Model):
     slave_distribution = Column(String(100), nullable=False)
     slave_ip = Column(String(100), nullable=False)
     slave_last_connect = Column(DateTime)
+    test_id =  Column(Integer)
 
     def __init__(self, slave_hostname, slave_version, slave_system, slave_cores, slave_distribution, slave_ip, slave_last_connect):
         self.slave_hostname = slave_hostname

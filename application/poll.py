@@ -16,7 +16,7 @@ def thread_function():
     log = get_log()
     print(log)
 
-    payload = {"status":1,"datetime": str(datetime.datetime.now()), "system_info": get_system_info()}
+    payload = {"status":1,"datetime": str(datetime.datetime.now()), "system_info": get_system_info(), "test_id": 1}
 
     response = requests.post(app.config['MASTER_HOST'] + '/master/slave_update', data=json.dumps(payload))
     response_json = response.json()

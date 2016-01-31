@@ -1,13 +1,13 @@
 """empty message
 
-Revision ID: 27a475bde4f
+Revision ID: 4879569647c
 Revises: None
-Create Date: 2016-01-30 22:28:32.678260
+Create Date: 2016-01-31 07:46:43.011244
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '27a475bde4f'
+revision = '4879569647c'
 down_revision = None
 
 from alembic import op
@@ -25,6 +25,7 @@ def upgrade():
     sa.Column('slave_distribution', sa.String(length=100), nullable=False),
     sa.Column('slave_ip', sa.String(length=100), nullable=False),
     sa.Column('slave_last_connect', sa.DateTime(), nullable=True),
+    sa.Column('test_id', sa.Integer(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('testhistory',
@@ -43,6 +44,8 @@ def upgrade():
     sa.Column('testrole_start_time', sa.DateTime(), nullable=True),
     sa.Column('testrole_end_time', sa.DateTime(), nullable=True),
     sa.Column('testrole_log', sa.String(), nullable=True),
+    sa.Column('testrole_order', sa.Integer(), nullable=True),
+    sa.Column('testrole_type', sa.Integer(), nullable=True),
     sa.Column('slave_id', sa.Integer(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )

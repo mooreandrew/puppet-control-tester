@@ -27,6 +27,7 @@ if app.config['MODE'] == 'master':
         slave_row = slaves.query.filter(slaves.slave_hostname == request_json['system_info']['hostname'], slaves.slave_ip == request_json['system_info']['ip']).order_by().first()
         if slave_row:
             slave_row.slave_last_connect = datetime.datetime.now()
+            slave_row.test_id = request_json['test_id']
         else:
             slave_row = slaves(request_json['system_info']['hostname'], request_json['system_info']['version'], request_json['system_info']['system'], request_json['system_info']['cores'], request_json['system_info']['distribution'], request_json['system_info']['ip'], datetime.datetime.now())
             db.session.add(slave_row)
@@ -44,11 +45,24 @@ if app.config['MODE'] == 'master':
             data['test_id'] = 0
 
 
+
         data['test_roles'] = []
-        testroles_res = testroles.query.filter(testroles.test_id == data['test_id'], testroles.slave_id == 0).order_by(testroles.id).limit(available_processes).all()
-        for testroles_row in testroles_res:
-            data['test_roles'].append({'id': testroles_row.id, 'name': testroles_row.testrole_name} )
-            # Assign slave_id to this node
+
+
+
+
+
+        # Only do the next step if every alive slave has updated its test id
+
+        testrolesorder_row = testroles.query.filter(testroles.test_id == data['test_id'], testroles.testrole_status != 2).order_by(testroles.testrole_order).first()
+
+        if testrolesorder_row:
+            testrole_order = testrolesorder_row.testrole_order
+
+            testroles_res = testroles.query.filter(testroles.test_id == data['test_id'], testroles.slave_id == 0, testroles.testrole_order == testrole_order).order_by(testroles.id).limit(available_processes).all()
+            for testroles_row in testroles_res:
+                data['test_roles'].append({'id': testroles_row.id, 'name': testroles_row.testrole_name, 'type': testroles_row.testrole_type } )
+                # Assign slave_id to this node
 
 
         return Response(json.dumps(data),  mimetype='application/json')
@@ -73,10 +87,12 @@ if app.config['MODE'] == 'master':
                 response = requests.get('https://api.github.com/repositories/29131296/contents/hiera/roles')
                 response_json2 = response.json()
 
+                db.session.add(testroles(test_id, 'puppet-master', 1, 1))
+
                 for files in response_json2:
-                    testrole_row = testroles(test_id, files['name'])
-                    db.session.add(testrole_row)
-                    db.session.commit()
+                    db.session.add(testroles(test_id, files['name'], 2, 2))
+
+                db.session.commit()
 
 
                 return test_id
