@@ -20,7 +20,7 @@ class testroles(db.Model):
     testrole_status = Column(Integer, default=0)
     testrole_start_time = Column(DateTime)
     testrole_end_time = Column(DateTime)
-    testrole_log = Column(String)
+    testrole_log = Column(String, default='')
     testrole_order = Column(Integer, default=0)
     testrole_type = Column(Integer, default=0)
     testrole_ipnum = Column(Integer, default=0)

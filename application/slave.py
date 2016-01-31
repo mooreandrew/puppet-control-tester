@@ -8,6 +8,8 @@ from time import sleep
 import shlex
 from threading import Thread
 import yaml
+import sys
+import re
 
 log = 'bb'
 
@@ -15,6 +17,7 @@ test_id = 0
 
 completed_boxes = {}
 progressing_boxes = {}
+interrupt = False
 
 def get_log():
     return log
@@ -38,6 +41,7 @@ def clone_repo():
 def vagrant_command(server):
     global progressing_boxes
     global completed_boxes
+    global interrupt
     if server['type'] == 1:
         server_type = '-91.control.net'
     else:
@@ -45,16 +49,25 @@ def vagrant_command(server):
 
     box_name = server['name'] + server_type
 
+    os.system("cd puppet-test-env; vagrant destroy --force " + box_name)
+
     progressing_boxes[server['id']] = server
     progressing_boxes[server['id']]['log'] = ''
-    io = subprocess.Popen(shlex.split('vagrant up ' + box_name), cwd='puppet-test-env', stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    io = subprocess.Popen(shlex.split('vagrant up ' + box_name + ' --color'), cwd='puppet-test-env', stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     for line in io.stdout:
-        progressing_boxes[server['id']]['log'] = progressing_boxes[server['id']]['log'] + str(line)
+        try:
+            progressing_boxes[server['id']]['log'] = progressing_boxes[server['id']]['log'] + line.decode('ascii')
+        except:
+            print('skipping log entry')
+        #print(interrupt)
+        #if interrupt == True:
+        #    break
+
     streamdata = io.communicate()[0]
     exit_code = io.returncode
 
     if server['type'] == 2:
-        os.system("cd puppet-test-env; vagrant destroy " + box_name)
+        os.system("cd puppet-test-env; vagrant destroy --force " + box_name)
 
     completed_boxes[server['id']] = server
 
@@ -62,6 +75,7 @@ def vagrant_command(server):
     completed_boxes[server['id']]['exit_code'] = exit_code
 
     progressing_boxes.pop(server['id'], None)
+
 
 def remove_completed_servers(servers):
     global completed_boxes
@@ -87,21 +101,62 @@ def linux_distribution():
     return [platform.system(), platform.release()]
 
 def get_system_info():
-
-    return {'system': platform.system(), 'distribution': linux_distribution()[0], 'version': linux_distribution()[1], 'cores': multiprocessing.cpu_count(), 'hostname': socket.gethostname(), 'ip': socket.gethostbyname(socket.gethostname())}
+    cores = multiprocessing.cpu_count()
+    if cores > 4:
+        cores = 4
+    return {'system': platform.system(), 'distribution': linux_distribution()[0], 'version': linux_distribution()[1], 'cores': cores, 'hostname': socket.gethostname(), 'ip': socket.gethostbyname(socket.gethostname())}
 
 
 def destroy_all_vms():
+    global interrupt
+    interrupt = True
+    terminated = False
 
-    os.system("cd puppet-test-env; vagrant destroy  --force puppet-master-91.control.net")
+    os.system("pkill vagrant")
+
+
+    while terminated == False:
+        print('Trying to terminiate puppet-master-91.control.net')
+        output = ''
+        io = subprocess.Popen(shlex.split("vagrant destroy --force puppet-master-91.control.net"), cwd='puppet-test-env', stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        for line in io.stdout:
+            try:
+                output = output + line.decode('ascii')
+            except:
+                print('skipping log entry')
+        print(output)
+
+        s = re.search('but another process is already executing an action on the machine.', output)
+        if not s:
+            terminated = True
+            break
+        sleep(5)
 
     if os.path.isfile("puppet-test-env/servers.yaml"):
         with open("puppet-test-env/servers.yaml", 'r') as stream:
             steam_yaml = yaml.load(stream)
-            print(steam_yaml)
-            if len(steam_yaml['servers']) > 0:
-                for server in steam_yaml['servers']:
-                    os.system("cd puppet-test-env; vagrant destroy --force " + list(server.keys())[0])
+            if steam_yaml:
+                if steam_yaml['servers']:
+                    if len(steam_yaml['servers']) > 0:
+                        for server in steam_yaml['servers']:
+                            terminated = False
+
+                            while terminated == False:
+                                print('Trying to terminiate ' + list(server.keys())[0])
+                                output = ''
+                                io = subprocess.Popen(shlex.split("vagrant destroy --force " + list(server.keys())[0]), cwd='puppet-test-env', stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                                for line in io.stdout:
+                                    try:
+                                        output = output + line.decode('ascii')
+                                    except:
+                                        print('skipping log entry')
+
+                                print(output)
+                                s = re.search('but another process is already executing an action on the machine.', output)
+                                if not s:
+                                    terminated = True
+                                    break
+                                sleep(5)
 
 def reset_serversyaml():
     f = open("puppet-test-env/servers.yaml",'w')

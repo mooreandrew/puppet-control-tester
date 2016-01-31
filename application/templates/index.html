@@ -20,7 +20,11 @@
      </tr>
      {% for slave_row in slave_res %}
      {% if is_datetime_recently(slave_row['slave_last_connect']) == 1 %}
+      {% if test_id != slave_row['test_id'] %}
+      {% set status = 'warning' %}
+           {% else %}
      	{% set status = 'success' %}
+           {% endif %}
      {% else %}
      	{% set status = 'danger' %}
      {% endif %}
@@ -34,13 +38,58 @@
        <td>{{ slave_row['slave_cores'] }} / {{ slave_row['slave_progressing'] }}</td>
        <td>{{ slave_row['test_id'] }}</td>
        <td>{{ slave_row['slave_last_connect'].strftime('%Y-%m-%d %H:%M') }}</td>
-
-
-
      </tr>
      {% endfor %}
    </table>
 </div>
 
+
+{% if test_row %}
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">Test ID {{ test_id }}</h3>
+  </div>
+   <table class="table table-striped">
+     <tr>
+       <th>Test Name</th>
+       <th>Test Type</th>
+       <th>Slave</th>
+       <th>Test Started</th>
+       <th>Test Finished</th>
+       <th>Test Status</th>
+       <th>View Logs</th>
+
+     </tr>
+     {% for testroles_row in testroles_res %}
+       {% if testroles_row['testrole_status'] == 1 %}
+       	{% set status_html = 'warning' %}
+        {% set status = 'Started' %}
+       {% elif testroles_row['testrole_status'] == 2 %}
+        {% set status_html = 'success' %}
+        {% set status = 'Success' %}
+       {% elif testroles_row['testrole_status'] == 3 %}
+        {% set status_html = 'danger' %}
+        {% set status = 'Failed' %}
+       {% else %}
+       	{% set status_html = 'default' %}
+        {% set status = 'Not Started' %}
+       {% endif %}
+
+     <tr class="{{ status_html }}">
+       <td>{{ testroles_row['testrole_name'] }}</td>
+       <td>{{ testroles_row['testrole_type'] }}</td>
+       <td>{{ testroles_row['slave_id'] }}</td>
+       <td>{{ testroles_row['testrole_start_time'] }}</td>
+       <td>{{ testroles_row['testrole_end_time'] }}</td>
+       <td>{{ status }}</td>
+       <td><a href="/log/{{ testroles_row['id'] }}" type="button" class="btn btn-primary btn-xs pull-right">View Log</a></td>
+     </tr>
+     {% endfor %}
+   </table>
+</div>
+
+<a href="/new_test" type="button" class="btn btn-primary pull-right">Start New Test</a>
+
+{% endif %}
 
 {% endblock %}

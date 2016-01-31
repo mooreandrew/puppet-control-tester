@@ -3,7 +3,10 @@ import os
 from flask.ext.sqlalchemy import SQLAlchemy
 import threading
 
-yourThread = threading.Thread()
+yourThread_slave1 = threading.Thread()
+yourThread_slave2 = threading.Thread()
+
+yourThread_master = threading.Thread()
 
 threadstopped = False
 
