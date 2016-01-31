@@ -4,6 +4,7 @@ from application.polling import *
 from application.slave import *
 from application.models import *
 import datetime
+import ansiconv
 
 if app.config['MODE'] == 'master':
 
@@ -21,6 +22,13 @@ if app.config['MODE'] == 'master':
 
         #print(get_latest_commit())
 
+        slaves_array = {}
+        slaves_res = slaves.query.filter().order_by(slaves.id.desc()).all()
+        for slaves_row in slaves_res:
+            slaves_array[slaves_row.id] = slaves_row.slave_hostname
+
+
+
         test_row = tests.query.filter().order_by(tests.id.desc()).first()
         if test_row:
             test_id = test_row.id
@@ -30,7 +38,7 @@ if app.config['MODE'] == 'master':
         testroles_res = testroles.query.filter(testroles.test_id == test_id).order_by(testroles.id).all()
 
         slave_res = slaves.query.filter().order_by(slaves.slave_hostname).all()
-        return render_template('index.html', slave_res=slave_res, test_row=test_row, test_id=test_id, testroles_res=testroles_res)
+        return render_template('index.html', slave_res=slave_res, test_row=test_row, test_id=test_id, testroles_res=testroles_res, slaves_array=slaves_array)
 
     @app.route('/os')
     def os():
@@ -46,11 +54,10 @@ if app.config['MODE'] == 'master':
     @app.route('/log/<id>')
     def log(id):
 
-
         testroles_row = testroles.query.filter(testroles.id == id).order_by(testroles.id).first()
-
-
-        return render_template('logs.html', testroles_row=testroles_row)
+        html = ansiconv.to_html(testroles_row.testrole_log)
+        css = ansiconv.base_css()
+        return render_template('logs.html', testroles_row=testroles_row, html=html, css=css)
 
 
     @app.route('/new_test')

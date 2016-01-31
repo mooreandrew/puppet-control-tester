@@ -2,12 +2,12 @@
 {% block content %}
 
 
-
+<style>{{ css }}</style>
 
   <div class="panel panel-default">
     <div class="panel-heading text-center" style="padding-bottom: 0px"><h2 style="margin: 0px">{{ testroles_row['testrole_name'] }}<h2>
     <h4> {{ page }}</div>
-        <pre style="display: -webkit-box; border-radius:0px, 0px, 4px, 4px;margin:0px; background-color:#FCFCFC; border:0px">{{ testroles_row['testrole_log'] }}</pre>
+        <pre style="display: -webkit-box; border-radius:0px, 0px, 4px, 4px;margin:0px; background-color:#FCFCFC; border:0px">{{ html|safe }}</pre>
     </div>
 <a href="/" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span> Return To Home </a>
 {% endblock %}

@@ -75,14 +75,20 @@
         {% set status = 'Not Started' %}
        {% endif %}
 
+       {% if testroles_row['testrole_type'] == 1 %}
+        {% set type = 'Control' %}
+       {% else %}
+        {% set type = 'Test' %}
+       {% endif %}
+
      <tr class="{{ status_html }}">
        <td>{{ testroles_row['testrole_name'] }}</td>
-       <td>{{ testroles_row['testrole_type'] }}</td>
-       <td>{{ testroles_row['slave_id'] }}</td>
-       <td>{{ testroles_row['testrole_start_time'] }}</td>
-       <td>{{ testroles_row['testrole_end_time'] }}</td>
-       <td>{{ status }}</td>
-       <td><a href="/log/{{ testroles_row['id'] }}" type="button" class="btn btn-primary btn-xs pull-right">View Log</a></td>
+       <td><small>{{ type }}</small></td>
+       <td><small>{{ slaves_array[testroles_row['slave_id']] }}</small></td>
+       <td><small>{{ testroles_row['testrole_start_time'] }}</small></td>
+       <td><small>{{ testroles_row['testrole_end_time'] }}</small></td>
+       <td><small>{{ status }}</small></td>
+       <td><a href="/log/{{ testroles_row['id'] }}" type="button" class="btn btn-primary btn-xs">View Log</a></td>
      </tr>
      {% endfor %}
    </table>
