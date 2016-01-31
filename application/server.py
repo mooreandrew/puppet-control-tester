@@ -13,8 +13,6 @@ if app.config['MODE'] == 'master':
     testroles_row.testrole_status = 0
     db.session.commit()
 
-    destroy_all_vms()
-
     @app.route('/')
     def index_master():
 
@@ -90,7 +88,7 @@ if app.config['MODE'] == 'master':
                 testrole_order = testrolesorder_row.testrole_order
                 testroles_res = testroles.query.filter(testroles.test_id == data['test_id'], testroles.slave_id == 0, testroles.testrole_status == 0, testroles.testrole_order == testrole_order).order_by(testroles.id).limit(available_processes).all()
                 for testroles_row in testroles_res:
-                    data['test_roles'].append({'id': testroles_row.id, 'name': testroles_row.testrole_name, 'type': testroles_row.testrole_type, 'ip': testrole_ipnum } )
+                    data['test_roles'].append({'id': testroles_row.id, 'name': testroles_row.testrole_name, 'type': testroles_row.testrole_type, 'ip': testroles_row.testrole_ipnum } )
                     testroles_row.slave_id = slave_row.id
                     testroles_row.testrole_start_time = datetime.datetime.now()
                     testroles_row.testrole_status = 1
@@ -120,9 +118,10 @@ if app.config['MODE'] == 'master':
                 response = requests.get('https://api.github.com/repositories/29131296/contents/hiera/roles')
                 response_json2 = response.json()
 
-                db.session.add(testroles(test_id, 'puppet-master', 1, 1))
-
                 num = 50;
+
+                db.session.add(testroles(test_id, 'puppet-master', 1, 1, num))
+
                 for files in response_json2:
                     num = num + 1
                     db.session.add(testroles(test_id, files['name'], 2, 2, num))

@@ -38,16 +38,15 @@ def thread_function():
     new_test_id = int(response_json['test_id'])
 
     if (new_test_id != test_id):
-        destroy_all_vms()
-        # TODO: stop/destroy all vms
         clone_repo()
-        # TODO: clear out puppet-test-env/servers.yaml
-        # TODO: create empty puppet-test-env/servers.yaml with default structure
+        destroy_all_vms()
+        reset_serversyaml()
         # start
         test_id = new_test_id
 
     remove_completed_servers(response_json['completed_boxes'])
 
+    write_serversyaml(response_json['test_roles'])
     start_vms(response_json['test_roles'])
 
 

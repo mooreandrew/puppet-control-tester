@@ -97,8 +97,11 @@ def destroy_all_vms():
 
     if os.path.isfile("puppet-test-env/servers.yaml"):
         with open("puppet-test-env/servers.yaml", 'r') as stream:
-            for server in yaml.load(stream)['servers']:
-                os.system("cd puppet-test-env; vagrant destroy --force " + list(server.keys())[0])
+            steam_yaml = yaml.load(stream)
+            print(steam_yaml)
+            if len(steam_yaml['servers']) > 0:
+                for server in steam_yaml['servers']:
+                    os.system("cd puppet-test-env; vagrant destroy --force " + list(server.keys())[0])
 
 def reset_serversyaml():
     f = open("puppet-test-env/servers.yaml",'w')
@@ -107,17 +110,18 @@ def reset_serversyaml():
 
 def write_serversyaml(servers):
     for server in servers:
-        f = open("puppet-test-env/servers.yaml",'a')
-        f.write('  - ' + server['name'] + '-91.test.net:\n')
-        f.write('      ip: 192.16.42.52\n')
-        f.write('      clone: false\n')
-        f.write('      test: true\n')
-        f.write('      machine_location: zone1\n')
-        f.write('      machine_role: ' + server['name'] + '\n')
-        f.write('      puppet_environment: development\n') 
-        f.close()
+        if server['type'] == 2:
+            f = open("puppet-test-env/servers.yaml",'a')
+            f.write('  - ' + server['name'] + '-91.test.net:\n')
+            f.write('      ip: 192.16.42.' + str(server['ip']) + '\n')
+            f.write('      clone: false\n')
+            f.write('      test: true\n')
+            f.write('      machine_location: zone1\n')
+            f.write('      machine_role: ' + server['name'] + '\n')
+            f.write('      puppet_environment: development\n')
+            f.close()
 
-#
+    #
 # servers:
 #   - gitlab-app-91.test.net:
 #       ip: 192.16.42.51
