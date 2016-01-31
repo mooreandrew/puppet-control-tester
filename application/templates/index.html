@@ -14,7 +14,7 @@
        <th>System</th>
        <th>Distribution</th>
        <th>Version</th>
-       <th>Cores</th>
+       <th>Threads</th>
        <th>Test ID</th>
        <th>Last Call</th>
      </tr>
@@ -31,7 +31,7 @@
        <td>{{ slave_row['slave_system'] }}</td>
        <td>{{ slave_row['slave_distribution'] }}</td>
        <td>{{ slave_row['slave_version'] }}</td>
-       <td>{{ slave_row['slave_cores'] }}</td>
+       <td>{{ slave_row['slave_cores'] }} / {{ slave_row['slave_progressing'] }}</td>
        <td>{{ slave_row['test_id'] }}</td>
        <td>{{ slave_row['slave_last_connect'].strftime('%Y-%m-%d %H:%M') }}</td>
 

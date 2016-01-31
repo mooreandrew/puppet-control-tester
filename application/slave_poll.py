@@ -14,10 +14,16 @@ tries = 0
 
 def thread_function():
     global test_id
+
+
+    global completed_boxes
+    global progressing_boxes
+
     log = get_log()
     print(log)
     print(test_id)
-
+    print('thread_function')
+    print(completed_boxes)
     payload = {}
 
     payload["datetime"] = str(datetime.datetime.now())
@@ -25,13 +31,14 @@ def thread_function():
     payload["test_id"] = test_id
     payload['progressing_boxes'] = progressing_boxes
     payload['completed_boxes'] = completed_boxes
-
     response = requests.post(app.config['MASTER_HOST'] + '/master/slave_update', data=json.dumps(payload))
     response_json = response.json()
+    #completed_boxes = {}
 
     new_test_id = int(response_json['test_id'])
 
     if (new_test_id != test_id):
+        destroy_all_vms()
         # TODO: stop/destroy all vms
         clone_repo()
         # TODO: clear out puppet-test-env/servers.yaml
@@ -39,20 +46,12 @@ def thread_function():
         # start
         test_id = new_test_id
 
+    remove_completed_servers(response_json['completed_boxes'])
+
     start_vms(response_json['test_roles'])
 
 
-
     print(response_json)
-    # Send message to the master.
-    # - I'm alive (done)
-    # - Current test id (if this doesn't match server, then to stop all tests)
-    # - How many cores (done)
-    # - The completed tests (and their status)
-    # - The active tests
-    # - Any logs
-
-
 
 POOL_TIME = 5 #Seconds
 

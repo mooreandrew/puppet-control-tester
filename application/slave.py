@@ -7,14 +7,14 @@ from random import randint
 from time import sleep
 import shlex
 from threading import Thread
+import yaml
 
 log = 'bb'
 
 test_id = 0
 
-progressing_boxes = {}
-
 completed_boxes = {}
+progressing_boxes = {}
 
 def get_log():
     return log
@@ -36,7 +36,8 @@ def clone_repo():
 
 
 def vagrant_command(server):
-
+    global progressing_boxes
+    global completed_boxes
     if server['type'] == 1:
         server_type = '-91.control.net'
     else:
@@ -48,7 +49,6 @@ def vagrant_command(server):
     progressing_boxes[server['id']]['log'] = ''
     io = subprocess.Popen(shlex.split('vagrant up ' + box_name), cwd='puppet-test-env', stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     for line in io.stdout:
-        print(str(line.strip()))
         progressing_boxes[server['id']]['log'] = progressing_boxes[server['id']]['log'] + str(line)
     streamdata = io.communicate()[0]
     exit_code = io.returncode
@@ -56,13 +56,18 @@ def vagrant_command(server):
     if server['type'] == 2:
         os.system("cd puppet-test-env; vagrant destroy " + box_name)
 
-    progressing_boxes.pop(server['id'], None)
+    completed_boxes[server['id']] = server
 
-    completed_boxes[server['id']]['log'] = str(line)
+    completed_boxes[server['id']]['log'] = progressing_boxes[server['id']]['log']
     completed_boxes[server['id']]['exit_code'] = exit_code
 
-    print(exit_code)
+    progressing_boxes.pop(server['id'], None)
 
+def remove_completed_servers(servers):
+    global completed_boxes
+    for key, completed_servers in servers.items():
+        print('popping ' + str(key) )
+        completed_boxes.pop(int(key), None)
 
 def start_vms(servers):
 
@@ -83,8 +88,42 @@ def linux_distribution():
 
 def get_system_info():
 
-    # Update slave, set details
-    #
-
-
     return {'system': platform.system(), 'distribution': linux_distribution()[0], 'version': linux_distribution()[1], 'cores': multiprocessing.cpu_count(), 'hostname': socket.gethostname(), 'ip': socket.gethostbyname(socket.gethostname())}
+
+
+def destroy_all_vms():
+
+    os.system("cd puppet-test-env; vagrant destroy  --force puppet-master-91.control.net")
+
+    if os.path.isfile("puppet-test-env/servers.yaml"):
+        with open("puppet-test-env/servers.yaml", 'r') as stream:
+            for server in yaml.load(stream)['servers']:
+                os.system("cd puppet-test-env; vagrant destroy --force " + list(server.keys())[0])
+
+def reset_serversyaml():
+    f = open("puppet-test-env/servers.yaml",'w')
+    f.write('servers:\n')
+    f.close()
+
+def write_serversyaml(servers):
+    for server in servers:
+        f = open("puppet-test-env/servers.yaml",'a')
+        f.write('  - ' + server['name'] + '-91.test.net:\n')
+        f.write('      ip: 192.16.42.52\n')
+        f.write('      clone: false\n')
+        f.write('      test: true\n')
+        f.write('      machine_location: zone1\n')
+        f.write('      machine_role: ' + server['name'] + '\n')
+        f.write('      puppet_environment: development\n') 
+        f.close()
+
+#
+# servers:
+#   - gitlab-app-91.test.net:
+#       ip: 192.16.42.51
+#       clone: false
+#       test: true
+#       machine_location: zone1
+#       machine_role: gitlab-app
+#       puppet_environment: development
+#
